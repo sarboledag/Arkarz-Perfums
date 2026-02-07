@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Arkarz Perfums{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: '#FFD700',
+                        dark: '#1a1a1a',
+                        darker: '#111111',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .gradient-gold {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+        }
+        #cart-items > div {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #cart-items > div:last-child {
+            border-bottom: none;
+        }
+        #cart-items p {
+            margin: 0 0 0.25rem 0;
+            line-height: 1.3;
+        }
+        #cart-items p.text-gold {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #FFD700;
+        }
+        #cart-items p.text-gray-400 {
+            font-size: 0.875rem;
+        }
+        #cart-items button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #FF5050;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s ease-in-out;
+        }
+        #cart-items button:hover {
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <nav class="bg-darker shadow-lg border-b border-gold sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-8">
+                    <a href="{% url 'perfumes:home' %}" class="text-2xl font-bold text-gold">Arkarz Perfums</a>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="{% url 'perfumes:home' %}" class="text-gray-300 hover:text-gold transition-colors">Inicio</a>
+                        <a href="{% url 'perfumes:productos' %}" class="text-gray-300 hover:text-gold transition-colors">Productos</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="cart-toggle" class="relative text-gray-300 hover:text-gold transition-colors" aria-label="Abrir carrito">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 1.5M7 13l1.5 1.5m0 0L15 18H8l-7-7m15 0v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6m12 0H8">
+                            </path>
+                        </svg>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-80 bg-darker border-l border-gold transform translate-x-full transition-transform z-50">
+        <div class="p-4 border-b border-gold flex justify-between items-center">
+            <h3 class="text-xl font-bold text-gold">🛒 Mi Carrito</h3>
+            <button id="cart-close" class="text-gray-400 hover:text-white text-2xl" aria-label="Cerrar carrito">&times;</button>
+        </div>
+        <div id="cart-items" class="p-4 flex-1 overflow-y-auto max-h-96">
+            <div class="text-center py-8 text-gray-400">Tu carrito está vacío</div>
+        </div>
+        <div class="p-4 border-t border-gold">
+            <div class="mb-4 flex justify-between items-center text-lg font-bold">
+                <span class="text-gold">Total:</span>
+                <span id="cart-total" class="text-gold">$0</span>
+            </div>
+            <button id="checkout-btn" disabled
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                💬 Finalizar por WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <div id="cart-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i=0; i<cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrfToken = getCookie('csrftoken');
+
+        const cartToggleBtn = document.getElementById('cart-toggle');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
+        const cartCloseBtn = document.getElementById('cart-close');
+        const cartCountElem = document.getElementById('cart-count');
+        const cartItemsElem = document.getElementById('cart-items');
+        const cartTotalElem = document.getElementById('cart-total');
+        const checkoutBtn = document.getElementById('checkout-btn');
+
+        cartToggleBtn.addEventListener('click', toggleCart);
+        cartCloseBtn.addEventListener('click', toggleCart);
+        cartOverlay.addEventListener('click', toggleCart);
+
+        async function fetchCart() {
+            try {
+                const response = await fetch("{% url 'perfumes:carrito_json' %}");
+                if (response.ok) {
+                    const data = await response.json();
+                    return data;
+                }
+            } catch (error) {
+                console.error('Error fetching cart:', error);
+            }
+            return {items: [], total_items: 0, total_monto: 0};
+        }
+
+        async function updateCartUI() {
+            const data = await fetchCart();
+            if (data.total_items > 0) {
+                cartCountElem.textContent = data.total_items;
+                cartCountElem.classList.remove('hidden');
+
+                let html = '';
+                data.items.forEach(item => {
+                    html += `<div class="p-3 border-b border-gray-700 flex justify-between items-center">
+                                <div class="flex-1">
+                                    <p class="text-gold font-semibold">${item.nombre}</p>
+                                    <p class="text-sm text-gray-400">Cantidad: ${item.cantidad}</p>
+                                    <p class="text-sm text-gray-400">Subtotal: $${Math.round(item.subtotal).toLocaleString('es-CO')}</p>
+                                </div>
+                                <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-400 text-lg font-bold ml-2" aria-label="Eliminar producto">&times;</button>
+                            </div>`;
+                });
+                cartItemsElem.innerHTML = html;
+                cartTotalElem.textContent = `$${Math.round(data.total_monto).toLocaleString('es-CO')}`;
+                checkoutBtn.disabled = false;
+            } else {
+                cartCountElem.classList.add('hidden');
+                cartItemsElem.innerHTML = `<div class="text-center py-8 text-gray-400">Tu carrito está vacío</div>`;
+                cartTotalElem.textContent = '$0';
+                checkoutBtn.disabled = true;
+            }
+        }
+
+        async function removeFromCart(id) {
+            try {
+                const response = await fetch(`{% url 'perfumes:eliminar_del_carrito' 0 %}`.replace('0', id), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    await updateCartUI();
+                    showToast('Producto eliminado del carrito');
+                } else {
+                    showToast(data.error || 'No se pudo eliminar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error de conexión');
+            }
+        }
+
+        function toggleCart() {
+            cartSidebar.classList.toggle('translate-x-full');
+            cartOverlay.classList.toggle('hidden');
+        }
+
+        checkoutBtn.addEventListener('click', async () => {
+            const data = await fetchCart();
+            let whatsappMessage = "Hola, deseo hacer este pedido:\n\n";
+            data.items.forEach(item => {
+                whatsappMessage += `- ${item.nombre} x ${item.cantidad} = $${Math.round(item.subtotal)}\n`;
+            });
+            whatsappMessage += `\nTotal: $${Math.round(data.total_monto)}\n`;
+            whatsappMessage += "\nPor favor confirmar disponibilidad.";
+            const whatsappUrl = `https://wa.me/573218599032?text=${encodeURIComponent(whatsappMessage)}`;
+            window.open(whatsappUrl, "_blank");
+            toggleCart();
+        });
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', updateCartUI);
+    </script>
+</body>
+</html>
+
+
+
+

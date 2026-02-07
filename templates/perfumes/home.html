@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-center mb-8 text-gold">Bienvenido a Arkarz Perfums</h1>
+    <p class="text-center text-gray-400 mb-8">Los mejores perfumes árabes</p>
+    
+    <!-- Sección de Recomendaciones -->
+    <div class="mb-12">
+        <h2 class="text-2xl font-bold text-gold mb-6">✨ Recomendados para ti</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for perfume in perfumes %}
+                <div class="bg-darker rounded-lg shadow-md overflow-hidden hover:scale-105 hover:shadow-xl transition-all duration-300 border border-gold relative">
+                    {% if perfume.imagen %}
+                        <img src="{{ perfume.imagen.url }}" alt="{{ perfume.nombre }}" class="w-full h-64 object-cover">
+                    {% else %}
+                        <div class="w-full h-64 bg-black flex items-center justify-center">
+                            <i class="fas fa-spray-can text-gold text-4xl"></i>
+                        </div>
+                    {% endif %}
+
+                    <!-- Botón corazón en la tarjeta (solo icono) -->
+                    <button type="button"
+                            data-perfume-id="{{ perfume.id }}"
+                            data-wishlist-url="{% url 'perfumes:lista_deseos_anadir' perfume.id %}"
+                            class="btn-wishlist absolute top-3 right-3 text-gold bg-black/60 p-2 rounded-full shadow hover:text-yellow-300 transition"
+                            title="Agregar a deseos">
+                        <i class="fas fa-heart text-lg"></i>
+                    </button>
+
+                    <div class="p-4">
+                        <h3 class="font-bold text-lg text-gold mb-2">{{ perfume.nombre }}</h3>
+                        <p class="text-gold font-semibold text-sm mb-2">{{ perfume.marca.nombre }}</p>
+                        {% if perfume.descripcion %}
+                            <p class="text-gray-400 text-sm mb-3 line-clamp-2">{{ perfume.descripcion|truncatewords:15 }}</p>
+                        {% endif %}
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-2xl font-bold text-gold">${{ perfume.precio }}</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                       {% if perfume.sexo == 'H' %}bg-blue-900 text-blue-200
+                                       {% elif perfume.sexo == 'M' %}bg-pink-900 text-pink-200
+                                       {% else %}bg-purple-900 text-purple-200{% endif %}">
+                                {% if perfume.sexo == 'H' %}Hombre
+                                {% elif perfume.sexo == 'M' %}Mujer
+                                {% else %}Unisex{% endif %}
+                            </span>
+                        </div>
+
+                        <a href="{% url 'perfumes:detalle_perfume' perfume.id %}" class="block w-full text-center bg-gold text-black py-2 rounded-full hover:bg-yellow-400 transition duration-300 font-bold shadow-md hover:shadow-lg">
+                            <i class="fas fa-eye mr-2"></i> Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <p class="text-gray-400">No hay productos disponibles</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="text-center mt-8">
+        <a href="{% url 'perfumes:productos' %}" class="bg-gold text-black px-8 py-3 rounded-full hover:bg-yellow-400 transition font-bold text-lg shadow-lg hover:shadow-xl">
+            Ver Todos los Productos
+        </a>
+    </div>
+</div>
+{% endblock %}

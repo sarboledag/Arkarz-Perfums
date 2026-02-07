@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gold mb-2">
+            <i class="fas fa-heart mr-3"></i>
+            Mi Lista de Deseos
+        </h1>
+        <p class="text-gray-400">
+            {% if deseos %}
+                Tienes {{ deseos.count }} producto{{ deseos.count|pluralize }} guardado{{ deseos.count|pluralize }}
+            {% else %}
+                Aún no has agregado productos a tu lista de deseos
+            {% endif %}
+        </p>
+    </div>
+
+    {% if deseos %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for item in deseos %}
+            <div class="bg-darker rounded-lg border border-gold p-4 flex gap-4 hover:shadow-xl transition-all" data-perfume-id="{{ item.perfume.id }}">
+                <!-- Imagen -->
+                <div class="flex-shrink-0">
+                    {% if item.perfume.imagen %}
+                        <img src="{{ item.perfume.imagen.url }}" alt="{{ item.perfume.nombre }}" 
+                             class="w-32 h-32 object-cover rounded-lg border border-gold">
+                    {% else %}
+                        <div class="w-32 h-32 bg-black flex items-center justify-center rounded-lg border border-gold">
+                            <i class="fas fa-spray-can text-gold text-3xl"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-gold mb-1">{{ item.perfume.nombre }}</h3>
+                        <p class="text-gold text-sm mb-2">{{ item.perfume.marca.nombre }}</p>
+                        
+                        <div class="flex items-center gap-4 mb-2">
+                            <span class="text-2xl font-bold text-gold">${{ item.perfume.precio|floatformat:0 }}</span>
+                            <span class="px-2 py-1 rounded text-xs font-medium
+                                       {% if item.perfume.sexo == 'H' %}bg-blue-900 text-blue-200
+                                       {% elif item.perfume.sexo == 'M' %}bg-pink-900 text-pink-200
+                                       {% else %}bg-purple-900 text-purple-200{% endif %}">
+                                {% if item.perfume.sexo == 'H' %}Hombre
+                                {% elif item.perfume.sexo == 'M' %}Mujer
+                                {% else %}Unisex{% endif %}
+                            </span>
+                        </div>
+                        
+                        <p class="text-gray-400 text-sm">
+                            <i class="far fa-clock mr-1"></i>
+                            Agregado el {{ item.fecha_agregado|date:"d/m/Y" }}
+                        </p>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="flex gap-2 mt-4">
+                        <a href="{% url 'perfumes:detalle_perfume' item.perfume.id %}" 
+                           class="flex-1 text-center bg-gold text-black py-2 rounded-lg hover:bg-yellow-400 transition font-bold">
+                            <i class="fas fa-eye mr-1"></i> Ver
+                        </a>
+                        <button data-perfume-id="{{ item.perfume.id }}" 
+                                class="btn-eliminar px-4 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition font-bold">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Botón para agregar todos al carrito -->
+        <div class="mt-8 text-center">
+            <button onclick="agregarTodosAlCarrito()" 
+                    class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg shadow-lg">
+                <i class="fas fa-shopping-cart mr-2"></i>
+                Agregar Todos al Carrito ({{ deseos.count }} productos)
+            </button>
+        </div>
+    {% else %}
+        <!-- Estado vacío -->
+        <div class="text-center py-16">
+            <i class="fas fa-heart text-gold text-6xl mb-4 opacity-50"></i>
+            <h2 class="text-2xl font-bold text-gold mb-4">Tu lista de deseos está vacía</h2>
+            <p class="text-gray-400 mb-8">
+                Explora nuestros productos y guarda tus favoritos para después
+            </p>
+            <a href="{% url 'perfumes:productos' %}" 
+               class="inline-block bg-gold text-black px-8 py-3 rounded-lg hover:bg-yellow-400 transition font-bold">
+                <i class="fas fa-shopping-bag mr-2"></i>
+                Ver Productos
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Eliminar de lista de deseos
+async function eliminarDeDeseos(perfumeId) {
+    if (!confirm('¿Eliminar este producto de tu lista de deseos?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/lista-deseos/eliminar/${perfumeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast('✅ ' + data.message);
+            // Eliminar el elemento del DOM
+            const elemento = document.querySelector(`[data-perfume-id="${perfumeId}"]`);
+            if (elemento) {
+                elemento.style.opacity = '0';
+                setTimeout(() => {
+                    elemento.remove();
+                    // Recargar si no quedan más productos
+                    if (document.querySelectorAll('[data-perfume-id]').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            }
+        } else {
+            showToast('❌ ' + (data.error || 'Error al eliminar'));
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('❌ Error de conexión');
+    }
+}
+
+// Agregar todos al carrito
+async function agregarTodosAlCarrito() {
+    const perfumeIds = Array.from(document.querySelectorAll('[data-perfume-id]'))
+        .map(el => el.dataset.perfumeId);
+
+    let agregados = 0;
+    let errores = 0;
+
+    for (const perfumeId of perfumeIds) {
+        try {
+            const formData = new FormData();
+            formData.append('cantidad', '1');
+
+            const response = await fetch(`/carrito/añadir/${perfumeId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                agregados++;
+            } else {
+                errores++;
+            }
+        } catch (error) {
+            errores++;
+        }
+    }
+
+    if (agregados > 0) {
+        showToast(`✅ ${agregados} producto${agregados > 1 ? 's agregados' : ' agregado'} al carrito`);
+        if (typeof updateCartUI === 'function') {
+            updateCartUI();
+        }
+    }
+
+    if (errores > 0) {
+        showToast(`⚠️ ${errores} producto${errores > 1 ? 's' : ''} no se pudieron agregar`);
+    }
+}
+
+// Obtener cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Toast notification
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.classList.remove('translate-x-full') }, 100);
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => { document.body.removeChild(toast) }, 300);
+    }, 3000);
+}
+
+// Añadir a lista de deseos (función reutilizable)
+async function añadirAListaDeseos(perfumeId, btn) {
+    try {
+        btn.disabled = true;
+        const form = new FormData();
+        const resp = await fetch(`/lista-deseos/añadir/${perfumeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: form
+        });
+
+        if (resp.status === 403) {
+            showToast('🔒 Debes iniciar sesión para usar la lista de deseos');
+            btn.disabled = false;
+            setTimeout(() => { window.location.href = '/accounts/login/?next=' + encodeURIComponent(location.pathname); }, 700);
+            return;
+        }
+
+        const data = await resp.json();
+
+        if (resp.ok && data.success) {
+            btn.classList.add('bg-gold','text-black');
+            showToast('✅ ' + (data.message || 'Agregado a deseos'));
+            // Opcional: cambiar icono
+            const icon = btn.querySelector('i');
+            if (icon) icon.classList.add('text-red-500');
+        } else {
+            showToast('❌ ' + (data.error || 'No se pudo agregar'));
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('❌ Error de conexión');
+        btn.disabled = false;
+    }
+}
+
+// Añadir listener a botones de eliminar (evita problemas con onclick inline)
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('button[data-perfume-id]').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            const id = this.dataset.perfumeId;
+            if (id) {
+                eliminarDeDeseos(id);
+            }
+        });
+    });
+ });
+</script>
+{% endblock %}
