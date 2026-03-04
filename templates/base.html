@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Arkarz Perfums{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome: iconos (necesario para el corazón) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
     <script>
         tailwind.config = {
@@ -31,37 +30,45 @@
             gap: 0.75rem;
             align-items: center;
         }
-        #cart-items > div:last-child {
-            border-bottom: none;
-        }
-        #cart-items p {
-            margin: 0 0 0.25rem 0;
-            line-height: 1.3;
-        }
-        #cart-items p.text-gold {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #FFD700;
-        }
-        #cart-items p.text-gray-400 {
-            font-size: 0.875rem;
-        }
+        #cart-items > div:last-child { border-bottom: none; }
+        #cart-items p { margin: 0 0 0.25rem 0; line-height: 1.3; }
+        #cart-items p.text-gold { font-weight: 700; font-size: 1rem; color: #FFD700; }
+        #cart-items p.text-gray-400 { font-size: 0.875rem; }
         #cart-items button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: #FF5050;
-            padding: 0;
-            line-height: 1;
-            transition: color 0.2s ease-in-out;
+            background: none; border: none; cursor: pointer;
+            font-size: 1.5rem; color: #FF5050; padding: 0;
+            line-height: 1; transition: color 0.2s ease-in-out;
         }
-        #cart-items button:hover {
-            color: #ff4444;
+        #cart-items button:hover { color: #ff4444; }
+
+        /* ── Animaciones globales ── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeInUp 0.5s ease both;
+        }
+        main > * {
+            animation: fadeInUp 0.5s ease both;
+        }
+        body {
+            animation: fadeIn 0.3s ease;
+        }
+        nav a {
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+        nav a:hover {
+            transform: translateY(-1px);
         }
     </style>
 </head>
 <body class="bg-black text-white">
+
     <nav class="bg-darker shadow-lg border-b border-gold sticky top-0 z-40">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
@@ -71,44 +78,60 @@
                         <a href="{% url 'perfumes:home' %}" class="text-gray-300 hover:text-gold transition-colors">Inicio</a>
                         <a href="{% url 'perfumes:productos' %}" class="text-gray-300 hover:text-gold transition-colors">Productos</a>
                     </div>
-                    <!-- Corazón de lista de deseos: más a la izquierda, separado del logo -->
+                    <!-- Corazón lista de deseos -->
                     {% if user.is_authenticated %}
-                    <a id="wishlist-link" href="{% url 'perfumes:lista_deseos' %}" class="text-gold hover:text-yellow-400 relative ml-4 md:ml-6" title="Mis deseos">
+                    <a id="wishlist-link" href="{% url 'perfumes:lista_deseos' %}"
+                       class="text-gold hover:text-yellow-400 relative ml-4 md:ml-6" title="Mis deseos">
                         <i id="wishlist-icon" class="fas fa-heart text-xl text-gold"></i>
                         <span id="wishlist-count" class="absolute -top-2 -right-3 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">0</span>
                     </a>
                     {% else %}
-                    <a id="wishlist-link" href="{% url 'login' %}?next={% url 'perfumes:lista_deseos' %}" class="text-gold hover:text-yellow-400 relative ml-4 md:ml-6" title="Mis deseos">
+                    <a id="wishlist-link" href="{% url 'login' %}?next={% url 'perfumes:lista_deseos' %}"
+                       class="text-gold hover:text-yellow-400 relative ml-4 md:ml-6" title="Mis deseos">
                         <i id="wishlist-icon" class="fas fa-heart text-xl text-gold"></i>
                     </a>
                     {% endif %}
                 </div>
-                 <div class="flex items-center space-x-4">
-                     {% if user.is_authenticated %}
-                         <span class="text-gray-300">Hola, {{ user.username }}</span>
-                         <a href="{% url 'logout' %}" class="text-gray-300 hover:text-gold transition">Cerrar sesión</a>
-                     {% else %}
-                         <a href="{% url 'login' %}" class="text-gray-300 hover:text-gold transition">Iniciar sesión</a>
-                         <a href="{% url 'registro' %}" class="text-gray-300 hover:text-gold transition">Registrarse</a>
-                     {% endif %}
- 
-                     <button id="cart-toggle" class="relative text-gray-300 hover:text-gold transition-colors" aria-label="Abrir carrito">
-                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                   d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 1.5M7 13l1.5 1.5m0 0L15 18H8l-7-7m15 0v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6m12 0H8">
-                             </path>
-                         </svg>
-                         <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-                     </button>
-                 </div>
-             </div>
-         </div>
-     </nav>
+
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <!-- ✅ Link al panel solo para admins -->
+                        {% if user.is_staff %}
+                        <a href="{% url 'perfumes:admin_dashboard' %}" 
+                           class="text-gray-300 hover:text-gold transition flex items-center gap-1">
+                            <i class="fas fa-crown text-gold"></i>
+                            <span>Panel</span>
+                        </a>
+                        {% endif %}
+                        <!-- Link al perfil -->
+                        <a href="{% url 'perfil' %}" class="text-gray-300 hover:text-gold transition flex items-center gap-1">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ user.username }}</span>
+                        </a>
+                        <a href="{% url 'logout' %}" class="text-gray-300 hover:text-gold transition">Cerrar sesión</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-gray-300 hover:text-gold transition">Iniciar sesión</a>
+                        <a href="{% url 'registro' %}" class="text-gray-300 hover:text-gold transition">Registrarse</a>
+                    {% endif %}
+
+                    <button id="cart-toggle" class="relative text-gray-300 hover:text-gold transition-colors" aria-label="Abrir carrito">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 1.5M7 13l1.5 1.5m0 0L15 18H8l-7-7m15 0v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6m12 0H8">
+                            </path>
+                        </svg>
+                        <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
     <main>
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Carrito sidebar -->
     <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-80 bg-darker border-l border-gold transform translate-x-full transition-transform z-50">
         <div class="p-4 border-b border-gold flex justify-between items-center">
             <h3 class="text-xl font-bold text-gold">🛒 Mi Carrito</h3>
@@ -136,7 +159,7 @@
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
                 const cookies = document.cookie.split(';');
-                for (let i=0; i<cookies.length; i++) {
+                for (let i = 0; i < cookies.length; i++) {
                     const cookie = cookies[i].trim();
                     if (cookie.startsWith(name + '=')) {
                         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
@@ -148,7 +171,6 @@
         }
 
         const csrfToken = getCookie('csrftoken');
-
         const cartToggleBtn = document.getElementById('cart-toggle');
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartOverlay = document.getElementById('cart-overlay');
@@ -165,14 +187,11 @@
         async function fetchCart() {
             try {
                 const response = await fetch("{% url 'perfumes:carrito_json' %}");
-                if (response.ok) {
-                    const data = await response.json();
-                    return data;
-                }
+                if (response.ok) return await response.json();
             } catch (error) {
                 console.error('Error fetching cart:', error);
             }
-            return {items: [], total_items: 0, total_monto: 0};
+            return { items: [], total_items: 0, total_monto: 0 };
         }
 
         async function updateCartUI() {
@@ -180,7 +199,6 @@
             if (data.total_items > 0) {
                 cartCountElem.textContent = data.total_items;
                 cartCountElem.classList.remove('hidden');
-
                 let html = '';
                 data.items.forEach(item => {
                     const imagenUrl = item.imagen || '/static/placeholder.png';
@@ -189,9 +207,9 @@
                                 <div class="flex-1">
                                     <p class="text-gold font-semibold text-sm">${item.nombre}</p>
                                     <p class="text-xs text-gray-400">Cantidad: ${item.cantidad}</p>
-                                    <p class="text-xs text-gray-400">Subtotal: ${item.subtotal.toLocaleString('es-CO')}</p>
+                                    <p class="text-xs text-gray-400">Subtotal: $${item.subtotal.toLocaleString('es-CO')}</p>
                                 </div>
-                                <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-400 text-xl font-bold" aria-label="Eliminar producto">&times;</button>
+                                <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-400 text-xl font-bold" aria-label="Eliminar">&times;</button>
                             </div>`;
                 });
                 cartItemsElem.innerHTML = html;
@@ -215,9 +233,7 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                
                 const data = await response.json();
-                
                 if (response.ok && data.success) {
                     await updateCartUI();
                     showToast('Producto eliminado del carrito');
@@ -237,74 +253,87 @@
 
         checkoutBtn.addEventListener('click', async () => {
             const data = await fetchCart();
-            let whatsappMessage = "Hola, deseo hacer este pedido:\n\n";
+            let msg = "Hola, deseo hacer este pedido:\n\n";
             data.items.forEach(item => {
-                whatsappMessage += `- ${item.nombre} x ${item.cantidad} = $${item.subtotal.toLocaleString('es-CO')}\n`;
+                msg += `- ${item.nombre} x ${item.cantidad} = $${item.subtotal.toLocaleString('es-CO')}\n`;
             });
-            whatsappMessage += `\nTotal: $${data.total_monto.toLocaleString('es-CO')}\n`;
-            whatsappMessage += "\nPor favor confirmar disponibilidad.";
-            const whatsappUrl = `https://wa.me/573218599032?text=${encodeURIComponent(whatsappMessage)}`;
-            window.open(whatsappUrl, "_blank");
+            msg += `\nTotal: $${data.total_monto.toLocaleString('es-CO')}\n`;
+            msg += "\nPor favor confirmar disponibilidad.";
+            window.open(`https://wa.me/573218599032?text=${encodeURIComponent(msg)}`, "_blank");
             toggleCart();
         });
 
         function showToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform';
+            toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
             toast.textContent = message;
             document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-            }, 100);
+            setTimeout(() => toast.classList.remove('translate-x-full'), 100);
             setTimeout(() => {
                 toast.classList.add('translate-x-full');
-                setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 300);
+                setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
         document.addEventListener('DOMContentLoaded', updateCartUI);
     </script>
 
-    <!-- Añadir JS global para wishlist (colócalo antes de cierre de body) -->
+    <!-- Wishlist JS global -->
     <script>
-function getCookie(name){let v=null; if(document.cookie && document.cookie!==''){document.cookie.split(';').forEach(c=>{const cc=c.trim(); if(cc.startsWith(name+'=')) v=decodeURIComponent(cc.split('=')[1]);});} return v;}
-function showToast(msg){ const t=document.createElement('div'); t.className='fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded z-50'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2800); }
-
-async function añadirAListaDeseos(perfumeId, btn){
-    try{
-        btn.disabled = true;
-        const endpoint = btn?.dataset?.wishlistUrl || `/lista-deseos/anadir/${perfumeId}/`;
-        const resp = await fetch(endpoint, { method: 'POST', headers: {'X-CSRFToken': getCookie('csrftoken'),'X-Requested-With':'XMLHttpRequest'} });
-        const ct = resp.headers.get('content-type')||'';
-        if(!ct.includes('application/json')){
-            if([302,401,403].includes(resp.status) || resp.redirected){ showToast('🔒 Debes iniciar sesión'); btn.disabled=false; setTimeout(()=>window.location.href='/accounts/login/?next='+encodeURIComponent(location.pathname),700); return; }
-            showToast('❌ Respuesta inesperada'); btn.disabled=false; return;
+        async function añadirAListaDeseos(perfumeId, btn) {
+            try {
+                btn.disabled = true;
+                const endpoint = btn?.dataset?.wishlistUrl || `/lista-deseos/anadir/${perfumeId}/`;
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const ct = resp.headers.get('content-type') || '';
+                if (!ct.includes('application/json')) {
+                    if ([302, 401, 403].includes(resp.status) || resp.redirected) {
+                        showToast('🔒 Debes iniciar sesión');
+                        btn.disabled = false;
+                        setTimeout(() => window.location.href = '/accounts/login/?next=' + encodeURIComponent(location.pathname), 700);
+                        return;
+                    }
+                    showToast('❌ Respuesta inesperada');
+                    btn.disabled = false;
+                    return;
+                }
+                const data = await resp.json();
+                if (resp.ok && data.success) {
+                    btn.classList.remove('text-yellow-400');
+                    btn.classList.add('text-red-500');
+                    showToast(data.message || 'Agregado a deseos');
+                    try {
+                        fetch("{% url 'perfumes:contar_lista_deseos' %}").then(r => r.json()).then(j => {
+                            const el = document.getElementById('wishlist-count');
+                            if (el) el.textContent = j.count ?? el.textContent;
+                        });
+                    } catch (e) {}
+                } else {
+                    showToast(data.error || 'No se pudo agregar');
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('❌ Error de conexión');
+                btn.disabled = false;
+            }
         }
-        const data = await resp.json();
-        if(resp.ok && data.success){
-            btn.classList.remove('text-yellow-400'); btn.classList.add('text-red-500');
-            const navIcon = document.getElementById('wishlist-icon'); if(navIcon) navIcon.classList.add('text-red-500');
-            showToast(data.message || 'Agregado a deseos');
-            // actualizar contador (opcional)
-            try{ fetch("{% url 'perfumes:contar_lista_deseos' %}").then(r=>r.json()).then(j=>{ const el=document.getElementById('wishlist-count'); if(el) el.textContent = j.count ?? el.textContent; }); }catch(e){}
-        } else {
-            showToast(data.error || 'No se pudo agregar'); btn.disabled=false;
-        }
-    } catch(e){ console.error(e); showToast('❌ Error de conexión'); btn.disabled=false; }
-}
 
-document.addEventListener('DOMContentLoaded', function(){
-    document.querySelectorAll('button.btn-wishlist').forEach(btn=>{
-        btn.addEventListener('click', function(){ const id = this.dataset.perfumeId; if(id) añadirAListaDeseos(id, this); });
-    });
-});
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('button.btn-wishlist').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.dataset.perfumeId;
+                    if (id) añadirAListaDeseos(id, this);
+                });
+            });
+        });
     </script>
+
 </body>
 </html>
-
-
-
-
-

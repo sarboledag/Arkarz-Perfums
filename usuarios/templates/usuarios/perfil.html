@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Mi Perfil - Arkarz Perfums{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-4xl">
+
+    <!-- Header -->
+    <div class="fade-in mb-8 flex items-center gap-4">
+        <div class="w-16 h-16 rounded-full bg-gold flex items-center justify-center text-black text-3xl font-bold shadow-lg">
+            {{ user.username|first|upper }}
+        </div>
+        <div>
+            <h1 class="text-3xl font-bold text-gold">{{ user.username }}</h1>
+            <p class="text-gray-400 text-sm">Miembro desde {{ user.date_joined|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6 fade-in">
+        {% for message in messages %}
+        <div class="bg-green-900 border border-green-500 text-green-200 px-4 py-3 rounded-lg text-sm">
+            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Datos personales -->
+        <div class="fade-in bg-darker border border-gold rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-gold mb-5">
+                <i class="fas fa-user mr-2"></i>Datos Personales
+            </h2>
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-gold text-sm font-semibold mb-1">Usuario</label>
+                    <input type="text" value="{{ user.username }}" disabled
+                           class="w-full bg-black border border-gray-700 rounded-lg px-4 py-2 text-gray-400 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-gold text-sm font-semibold mb-1">Email</label>
+                    <input type="text" value="{{ user.email|default:'No registrado' }}" disabled
+                           class="w-full bg-black border border-gray-700 rounded-lg px-4 py-2 text-gray-400 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-gold text-sm font-semibold mb-1">
+                        <i class="fas fa-phone mr-1"></i>Teléfono
+                    </label>
+                    <input type="text" name="telefono" value="{{ perfil.telefono|default:'' }}"
+                           placeholder="Ej: +57 300 123 4567"
+                           class="w-full bg-black border border-gold rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold transition">
+                </div>
+
+                <!-- Notificaciones -->
+                <div class="mt-4">
+                    <p class="text-gold text-sm font-semibold mb-3"><i class="fas fa-bell mr-1"></i>Notificaciones</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="notificar_nuevos_perfumes"
+                                   {% if perfil.notificar_nuevos_perfumes %}checked{% endif %}
+                                   class="w-4 h-4 accent-yellow-400">
+                            <span class="text-gray-300 text-sm">Nuevos perfumes</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="notificar_promociones"
+                                   {% if perfil.notificar_promociones %}checked{% endif %}
+                                   class="w-4 h-4 accent-yellow-400">
+                            <span class="text-gray-300 text-sm">Promociones y ofertas</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="notificar_newsletter"
+                                   {% if perfil.notificar_newsletter %}checked{% endif %}
+                                   class="w-4 h-4 accent-yellow-400">
+                            <span class="text-gray-300 text-sm">Newsletter mensual</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full py-2 bg-gold text-black font-bold rounded-lg hover:bg-yellow-400 transition mt-2">
+                    <i class="fas fa-save mr-2"></i>Guardar cambios
+                </button>
+            </form>
+        </div>
+
+        <!-- Stats + Deseos -->
+        <div class="space-y-6">
+
+            <!-- Estadísticas -->
+            <div class="fade-in bg-darker border border-gold rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-gold mb-4">
+                    <i class="fas fa-chart-bar mr-2"></i>Mi Actividad
+                </h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-black rounded-xl p-4 text-center border border-gray-800">
+                        <p class="text-3xl font-bold text-gold">{{ deseos.count }}</p>
+                        <p class="text-gray-400 text-xs mt-1">En lista de deseos</p>
+                    </div>
+                    <div class="bg-black rounded-xl p-4 text-center border border-gray-800">
+                        <p class="text-3xl font-bold text-gold">{{ calificaciones.count }}</p>
+                        <p class="text-gray-400 text-xs mt-1">Reseñas escritas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de deseos preview -->
+            <div class="fade-in bg-darker border border-gold rounded-2xl p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gold">
+                        <i class="fas fa-heart mr-2"></i>Mis Deseos
+                    </h2>
+                    <a href="{% url 'perfumes:lista_deseos' %}" class="text-sm text-gold hover:underline">Ver todos</a>
+                </div>
+                {% if deseos %}
+                <div class="space-y-3">
+                    {% for item in deseos|slice:":3" %}
+                    <div class="flex items-center gap-3">
+                        {% if item.perfume.imagen %}
+                            <img src="{{ item.perfume.imagen.url }}" alt="{{ item.perfume.nombre }}"
+                                 class="w-12 h-12 object-cover rounded-lg border border-gold">
+                        {% else %}
+                            <div class="w-12 h-12 bg-black rounded-lg border border-gold flex items-center justify-center">
+                                <i class="fas fa-spray-can text-gold"></i>
+                            </div>
+                        {% endif %}
+                        <div class="flex-1">
+                            <p class="text-white text-sm font-semibold">{{ item.perfume.nombre }}</p>
+                            <p class="text-gold text-xs">${{ item.perfume.precio|floatformat:0 }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm text-center py-4">Aún no tienes productos en tu lista</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

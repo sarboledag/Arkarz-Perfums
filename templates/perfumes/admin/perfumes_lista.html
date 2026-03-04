@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Perfumes - Panel Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    <div class="flex items-center justify-between mb-6 fade-in">
+        <div>
+            <a href="{% url 'perfumes:admin_dashboard' %}" class="text-gray-400 hover:text-gold text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Panel
+            </a>
+            <h1 class="text-2xl font-bold text-gold mt-1"><i class="fas fa-spray-can mr-2"></i>Gestión de Perfumes</h1>
+        </div>
+        <a href="{% url 'perfumes:admin_perfume_nuevo' %}"
+           class="bg-gold text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-400 transition">
+            <i class="fas fa-plus mr-1"></i> Nuevo Perfume
+        </a>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg mb-2 text-sm
+            {% if message.tags == 'error' %}bg-red-900 border border-red-500 text-red-200
+            {% else %}bg-green-900 border border-green-500 text-green-200{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filtros -->
+    <div class="fade-in bg-darker border border-gold rounded-xl p-4 mb-6">
+        <form method="GET" class="flex flex-wrap gap-3 items-end">
+            <div>
+                <label class="block text-gold text-xs mb-1">Buscar</label>
+                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Nombre..."
+                       class="bg-black border border-gold rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-gold">
+            </div>
+            <div>
+                <label class="block text-gold text-xs mb-1">Marca</label>
+                <select name="marca" class="bg-black border border-gold rounded-lg px-3 py-2 text-white text-sm focus:outline-none">
+                    <option value="">Todas</option>
+                    {% for marca in marcas %}
+                    <option value="{{ marca.id }}" {% if request.GET.marca == marca.id|stringformat:"s" %}selected{% endif %}>
+                        {{ marca.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-gold text-xs mb-1">Estado</label>
+                <select name="activo" class="bg-black border border-gold rounded-lg px-3 py-2 text-white text-sm focus:outline-none">
+                    <option value="">Todos</option>
+                    <option value="1" {% if request.GET.activo == '1' %}selected{% endif %}>Activos</option>
+                    <option value="0" {% if request.GET.activo == '0' %}selected{% endif %}>Inactivos</option>
+                </select>
+            </div>
+            <button type="submit" class="bg-gold text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-400 transition text-sm">
+                <i class="fas fa-search mr-1"></i> Filtrar
+            </button>
+            <a href="{% url 'perfumes:admin_perfumes' %}" class="text-gray-400 hover:text-gold text-sm py-2">Limpiar</a>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="fade-in bg-darker border border-gold rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-black">
+                    <tr>
+                        <th class="text-left text-gold py-3 px-4">Producto</th>
+                        <th class="text-left text-gold py-3 px-4">Marca</th>
+                        <th class="text-left text-gold py-3 px-4">Precio</th>
+                        <th class="text-left text-gold py-3 px-4">Stock</th>
+                        <th class="text-left text-gold py-3 px-4">Estado</th>
+                        <th class="text-left text-gold py-3 px-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for perfume in perfumes %}
+                    <tr class="border-t border-gray-800 hover:bg-black transition" id="row-{{ perfume.id }}">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-3">
+                                {% if perfume.imagen %}
+                                <img src="{{ perfume.imagen.url }}" class="w-10 h-10 object-cover rounded border border-gold">
+                                {% else %}
+                                <div class="w-10 h-10 bg-black rounded border border-gold flex items-center justify-center">
+                                    <i class="fas fa-spray-can text-gold text-xs"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <p class="text-white font-semibold">{{ perfume.nombre }}</p>
+                                    <p class="text-gray-500 text-xs">{{ perfume.get_sexo_display }} · {{ perfume.tamaño }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-300">{{ perfume.marca.nombre }}</td>
+                        <td class="py-3 px-4 text-gold font-bold">${{ perfume.precio|floatformat:0 }}</td>
+                        <td class="py-3 px-4">
+                            <span class="{% if perfume.stock == 0 %}text-red-400{% elif perfume.stock < 5 %}text-yellow-400{% else %}text-green-400{% endif %} font-semibold">
+                                {{ perfume.stock }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <button onclick="toggleActivo({{ perfume.id }}, this)"
+                                    data-activo="{{ perfume.activo|yesno:'true,false' }}"
+                                    class="text-xs px-3 py-1 rounded-full font-bold transition
+                                    {% if perfume.activo %}bg-green-900 text-green-300 hover:bg-green-800{% else %}bg-red-900 text-red-300 hover:bg-red-800{% endif %}">
+                                {% if perfume.activo %}✓ Activo{% else %}✗ Inactivo{% endif %}
+                            </button>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex gap-2">
+                                <a href="{% url 'perfumes:admin_perfume_editar' perfume.id %}"
+                                   class="bg-gold text-black px-3 py-1 rounded text-xs font-bold hover:bg-yellow-400 transition">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{% url 'perfumes:admin_perfume_eliminar' perfume.id %}"
+                                      onsubmit="return confirm('¿Eliminar {{ perfume.nombre }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="bg-red-700 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 transition">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-gray-500">No hay perfumes que mostrar</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleActivo(id, btn) {
+    const resp = await fetch(`/panel/perfumes/${id}/toggle/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await resp.json();
+    if (data.success) {
+        if (data.activo) {
+            btn.textContent = '✓ Activo';
+            btn.className = 'text-xs px-3 py-1 rounded-full font-bold transition bg-green-900 text-green-300 hover:bg-green-800';
+        } else {
+            btn.textContent = '✗ Inactivo';
+            btn.className = 'text-xs px-3 py-1 rounded-full font-bold transition bg-red-900 text-red-300 hover:bg-red-800';
+        }
+    }
+}
+</script>
+{% endblock %}

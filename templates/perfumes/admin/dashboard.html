@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Panel Admin - Arkarz{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8 fade-in">
+        <div>
+            <h1 class="text-3xl font-bold text-gold"><i class="fas fa-crown mr-2"></i>Panel de Administración</h1>
+            <p class="text-gray-400 mt-1">Gestiona tu tienda desde aquí</p>
+        </div>
+        <a href="{% url 'perfumes:home' %}" class="text-gray-400 hover:text-gold transition text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Volver a la tienda
+        </a>
+    </div>
+
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg mb-2 text-sm
+            {% if message.tags == 'error' %}bg-red-900 border border-red-500 text-red-200
+            {% else %}bg-green-900 border border-green-500 text-green-200{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Stats cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="fade-in bg-darker border border-gold rounded-xl p-5 text-center">
+            <i class="fas fa-spray-can text-gold text-2xl mb-2"></i>
+            <p class="text-3xl font-bold text-gold">{{ total_perfumes }}</p>
+            <p class="text-gray-400 text-sm mt-1">Perfumes</p>
+        </div>
+        <div class="fade-in bg-darker border border-gold rounded-xl p-5 text-center">
+            <i class="fas fa-tag text-gold text-2xl mb-2"></i>
+            <p class="text-3xl font-bold text-gold">{{ total_marcas }}</p>
+            <p class="text-gray-400 text-sm mt-1">Marcas activas</p>
+        </div>
+        <div class="fade-in bg-darker border border-gold rounded-xl p-5 text-center">
+            <i class="fas fa-users text-gold text-2xl mb-2"></i>
+            <p class="text-3xl font-bold text-gold">{{ total_usuarios }}</p>
+            <p class="text-gray-400 text-sm mt-1">Usuarios</p>
+        </div>
+        <div class="fade-in bg-darker border border-gold rounded-xl p-5 text-center">
+            <i class="fas fa-heart text-gold text-2xl mb-2"></i>
+            <p class="text-3xl font-bold text-gold">{{ total_deseos }}</p>
+            <p class="text-gray-400 text-sm mt-1">En listas de deseos</p>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% if perfumes_sin_stock > 0 %}
+    <div class="fade-in bg-red-900 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6 flex items-center gap-3">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+        <span><strong>{{ perfumes_sin_stock }} perfume{{ perfumes_sin_stock|pluralize }}</strong> sin stock. 
+        <a href="{% url 'perfumes:admin_perfumes' %}?activo=1" class="underline hover:text-white">Ver productos</a></span>
+    </div>
+    {% endif %}
+
+    <!-- Accesos rápidos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="fade-in bg-darker border border-gold rounded-xl p-6">
+            <h2 class="text-xl font-bold text-gold mb-4"><i class="fas fa-spray-can mr-2"></i>Perfumes</h2>
+            <div class="space-y-3">
+                <a href="{% url 'perfumes:admin_perfumes' %}" 
+                   class="flex items-center justify-between bg-black rounded-lg px-4 py-3 hover:border-gold border border-gray-800 transition">
+                    <span class="text-gray-300">Ver todos los perfumes</span>
+                    <span class="text-gold font-bold">{{ total_perfumes }}</span>
+                </a>
+                <a href="{% url 'perfumes:admin_perfume_nuevo' %}" 
+                   class="flex items-center justify-between bg-gold text-black rounded-lg px-4 py-3 hover:bg-yellow-400 transition font-bold">
+                    <span><i class="fas fa-plus mr-2"></i>Agregar nuevo perfume</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="{% url 'perfumes:admin_perfumes' %}?activo=0" 
+                   class="flex items-center justify-between bg-black rounded-lg px-4 py-3 hover:border-gold border border-gray-800 transition">
+                    <span class="text-gray-300">Perfumes inactivos</span>
+                    <span class="text-red-400 font-bold">{{ total_perfumes|add:"-"|add:perfumes_activos }}</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="fade-in bg-darker border border-gold rounded-xl p-6">
+            <h2 class="text-xl font-bold text-gold mb-4"><i class="fas fa-tag mr-2"></i>Marcas</h2>
+            <div class="space-y-3">
+                <a href="{% url 'perfumes:admin_marcas' %}" 
+                   class="flex items-center justify-between bg-black rounded-lg px-4 py-3 hover:border-gold border border-gray-800 transition">
+                    <span class="text-gray-300">Ver todas las marcas</span>
+                    <span class="text-gold font-bold">{{ total_marcas }}</span>
+                </a>
+                <a href="{% url 'perfumes:admin_marca_nueva' %}" 
+                   class="flex items-center justify-between bg-gold text-black rounded-lg px-4 py-3 hover:bg-yellow-400 transition font-bold">
+                    <span><i class="fas fa-plus mr-2"></i>Agregar nueva marca</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimos usuarios -->
+    <div class="fade-in bg-darker border border-gold rounded-xl p-6">
+        <h2 class="text-xl font-bold text-gold mb-4"><i class="fas fa-users mr-2"></i>Últimos usuarios registrados</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="text-left text-gold py-2 px-3">Usuario</th>
+                        <th class="text-left text-gold py-2 px-3">Email</th>
+                        <th class="text-left text-gold py-2 px-3">Registro</th>
+                        <th class="text-left text-gold py-2 px-3">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in ultimos_usuarios %}
+                    <tr class="border-b border-gray-800 hover:bg-black transition">
+                        <td class="py-2 px-3 text-white">
+                            <i class="fas fa-user-circle text-gold mr-2"></i>{{ u.username }}
+                        </td>
+                        <td class="py-2 px-3 text-gray-400">{{ u.email|default:"—" }}</td>
+                        <td class="py-2 px-3 text-gray-400">{{ u.date_joined|date:"d/m/Y" }}</td>
+                        <td class="py-2 px-3">
+                            {% if u.is_staff %}
+                            <span class="bg-gold text-black text-xs px-2 py-0.5 rounded-full font-bold">Admin</span>
+                            {% else %}
+                            <span class="bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded-full">Activo</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

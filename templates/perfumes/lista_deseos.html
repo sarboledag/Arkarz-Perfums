@@ -20,7 +20,7 @@
     {% if deseos %}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {% for item in deseos %}
-            <div class="bg-darker rounded-lg border border-gold p-4 flex gap-4 hover:shadow-xl transition-all" data-perfume-id="{{ item.perfume.id }}">
+            <div class="card-deseo bg-darker rounded-lg border border-gold p-4 flex gap-4 hover:shadow-xl transition-all" data-perfume-id="{{ item.perfume.id }}">
                 <!-- Imagen -->
                 <div class="flex-shrink-0">
                     {% if item.perfume.imagen %}
@@ -60,9 +60,13 @@
                     <!-- Botones -->
                     <div class="flex gap-2 mt-4">
                         <a href="{% url 'perfumes:detalle_perfume' item.perfume.id %}" 
-                           class="flex-1 text-center bg-gold text-black py-2 rounded-lg hover:bg-yellow-400 transition font-bold">
+                           class="text-center bg-gold text-black py-2 px-3 rounded-lg hover:bg-yellow-400 transition font-bold">
                             <i class="fas fa-eye mr-1"></i> Ver
                         </a>
+                        <button data-carrito-id="{{ item.perfume.id }}"
+                                class="btn-carrito flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition font-bold">
+                            <i class="fas fa-shopping-cart mr-1"></i> Al carrito
+                        </button>
                         <button data-perfume-id="{{ item.perfume.id }}" 
                                 class="btn-eliminar px-4 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition font-bold">
                             <i class="fas fa-trash"></i>
@@ -73,7 +77,6 @@
             {% endfor %}
         </div>
 
-        <!-- Botón para agregar todos al carrito -->
         <div class="mt-8 text-center">
             <button onclick="agregarTodosAlCarrito()" 
                     class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition font-bold text-lg shadow-lg">
@@ -82,13 +85,10 @@
             </button>
         </div>
     {% else %}
-        <!-- Estado vacío -->
         <div class="text-center py-16">
             <i class="fas fa-heart text-gold text-6xl mb-4 opacity-50"></i>
             <h2 class="text-2xl font-bold text-gold mb-4">Tu lista de deseos está vacía</h2>
-            <p class="text-gray-400 mb-8">
-                Explora nuestros productos y guarda tus favoritos para después
-            </p>
+            <p class="text-gray-400 mb-8">Explora nuestros productos y guarda tus favoritos para después</p>
             <a href="{% url 'perfumes:productos' %}" 
                class="inline-block bg-gold text-black px-8 py-3 rounded-lg hover:bg-yellow-400 transition font-bold">
                 <i class="fas fa-shopping-bag mr-2"></i>
@@ -99,12 +99,88 @@
 </div>
 
 <script>
-// Eliminar de lista de deseos
-async function eliminarDeDeseos(perfumeId) {
-    if (!confirm('¿Eliminar este producto de tu lista de deseos?')) {
-        return;
+// ── Agregar UN producto al carrito ──────────────────────────────────────────
+async function agregarAlCarrito(perfumeId, btn) {
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Agregando...';
+    }
+    try {
+        const formData = new FormData();
+        formData.append('cantidad', '1');
+
+        const response = await fetch(`/añadir-carrito/${perfumeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showToast('🛒 Producto agregado al carrito');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i> ¡Listo!';
+                btn.classList.replace('bg-green-600', 'bg-gray-600');
+                btn.classList.remove('hover:bg-green-700');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-shopping-cart mr-1"></i> Al carrito';
+                    btn.classList.replace('bg-gray-600', 'bg-green-600');
+                    btn.classList.add('hover:bg-green-700');
+                    btn.disabled = false;
+                }, 2000);
+            }
+            if (typeof updateCartUI === 'function') updateCartUI();
+        } else {
+            showToast('❌ ' + (data.error || 'No se pudo agregar al carrito'));
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-shopping-cart mr-1"></i> Al carrito';
+                btn.disabled = false;
+            }
+        }
+    } catch (error) {
+        showToast('❌ Error de conexión');
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-shopping-cart mr-1"></i> Al carrito';
+            btn.disabled = false;
+        }
+    }
+}
+
+// ── Agregar TODOS al carrito ────────────────────────────────────────────────
+async function agregarTodosAlCarrito() {
+    const ids = Array.from(document.querySelectorAll('.card-deseo[data-perfume-id]'))
+        .map(el => el.dataset.perfumeId);
+    let agregados = 0, errores = 0;
+
+    for (const id of ids) {
+        try {
+            const formData = new FormData();
+            formData.append('cantidad', '1');
+            const response = await fetch(`/añadir-carrito/${id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            response.ok ? agregados++ : errores++;
+        } catch { errores++; }
     }
 
+    if (agregados > 0) {
+        showToast(`✅ ${agregados} producto${agregados > 1 ? 's agregados' : ' agregado'} al carrito`);
+        if (typeof updateCartUI === 'function') updateCartUI();
+    }
+    if (errores > 0) showToast(`⚠️ ${errores} producto${errores > 1 ? 's' : ''} no se pudieron agregar`);
+}
+
+// ── Eliminar de lista de deseos (sin confirm) ───────────────────────────────
+async function eliminarDeDeseos(perfumeId) {
     try {
         const response = await fetch(`/lista-deseos/eliminar/${perfumeId}/`, {
             method: 'POST',
@@ -113,155 +189,53 @@ async function eliminarDeDeseos(perfumeId) {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
-
         const data = await response.json();
-
         if (response.ok && data.success) {
             showToast('✅ ' + data.message);
-            // Eliminar el elemento del DOM
-            const elemento = document.querySelector(`[data-perfume-id="${perfumeId}"]`);
-            if (elemento) {
-                elemento.style.opacity = '0';
+            const el = document.querySelector(`.card-deseo[data-perfume-id="${perfumeId}"]`);
+            if (el) {
+                el.style.transition = 'opacity 0.3s';
+                el.style.opacity = '0';
                 setTimeout(() => {
-                    elemento.remove();
-                    // Recargar si no quedan más productos
-                    if (document.querySelectorAll('[data-perfume-id]').length === 0) {
-                        location.reload();
-                    }
+                    el.remove();
+                    if (!document.querySelectorAll('.card-deseo').length) location.reload();
                 }, 300);
             }
         } else {
             showToast('❌ ' + (data.error || 'Error al eliminar'));
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ Error de conexión');
-    }
+    } catch { showToast('❌ Error de conexión'); }
 }
 
-// Agregar todos al carrito
-async function agregarTodosAlCarrito() {
-    const perfumeIds = Array.from(document.querySelectorAll('[data-perfume-id]'))
-        .map(el => el.dataset.perfumeId);
-
-    let agregados = 0;
-    let errores = 0;
-
-    for (const perfumeId of perfumeIds) {
-        try {
-            const formData = new FormData();
-            formData.append('cantidad', '1');
-
-            const response = await fetch(`/carrito/añadir/${perfumeId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            });
-
-            if (response.ok) {
-                agregados++;
-            } else {
-                errores++;
-            }
-        } catch (error) {
-            errores++;
-        }
-    }
-
-    if (agregados > 0) {
-        showToast(`✅ ${agregados} producto${agregados > 1 ? 's agregados' : ' agregado'} al carrito`);
-        if (typeof updateCartUI === 'function') {
-            updateCartUI();
-        }
-    }
-
-    if (errores > 0) {
-        showToast(`⚠️ ${errores} producto${errores > 1 ? 's' : ''} no se pudieron agregar`);
-    }
-}
-
-// Obtener cookie CSRF
+// ── Helpers ─────────────────────────────────────────────────────────────────
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+    let v = null;
+    if (document.cookie) {
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
+        });
     }
-    return cookieValue;
+    return v;
 }
 
-// Toast notification
 function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => { toast.classList.remove('translate-x-full') }, 100);
-    setTimeout(() => {
-        toast.classList.add('translate-x-full');
-        setTimeout(() => { document.body.removeChild(toast) }, 300);
-    }, 3000);
+    const t = document.createElement('div');
+    t.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+    t.textContent = message;
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.remove('translate-x-full'), 100);
+    setTimeout(() => { t.classList.add('translate-x-full'); setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-// Añadir a lista de deseos (función reutilizable)
-async function añadirAListaDeseos(perfumeId, btn) {
-    try {
-        btn.disabled = true;
-        const form = new FormData();
-        const resp = await fetch(`/lista-deseos/añadir/${perfumeId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: form
-        });
-
-        if (resp.status === 403) {
-            showToast('🔒 Debes iniciar sesión para usar la lista de deseos');
-            btn.disabled = false;
-            setTimeout(() => { window.location.href = '/accounts/login/?next=' + encodeURIComponent(location.pathname); }, 700);
-            return;
-        }
-
-        const data = await resp.json();
-
-        if (resp.ok && data.success) {
-            btn.classList.add('bg-gold','text-black');
-            showToast('✅ ' + (data.message || 'Agregado a deseos'));
-            // Opcional: cambiar icono
-            const icon = btn.querySelector('i');
-            if (icon) icon.classList.add('text-red-500');
-        } else {
-            showToast('❌ ' + (data.error || 'No se pudo agregar'));
-            btn.disabled = false;
-        }
-    } catch (e) {
-        console.error(e);
-        showToast('❌ Error de conexión');
-        btn.disabled = false;
-    }
-}
-
-// Añadir listener a botones de eliminar (evita problemas con onclick inline)
+// ── Event listeners ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('button[data-perfume-id]').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            const id = this.dataset.perfumeId;
-            if (id) {
-                eliminarDeDeseos(id);
-            }
-        });
+    document.querySelectorAll('.btn-eliminar[data-perfume-id]').forEach(btn => {
+        btn.addEventListener('click', function () { eliminarDeDeseos(this.dataset.perfumeId); });
     });
- });
+    document.querySelectorAll('.btn-carrito[data-carrito-id]').forEach(btn => {
+        btn.addEventListener('click', function () { agregarAlCarrito(this.dataset.carritoId, this); });
+    });
+});
 </script>
 {% endblock %}

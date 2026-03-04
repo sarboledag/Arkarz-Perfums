@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} - Panel Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-lg">
+
+    <div class="mb-6 fade-in">
+        <a href="{% url 'perfumes:admin_marcas' %}" class="text-gray-400 hover:text-gold text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Volver a marcas
+        </a>
+        <h1 class="text-2xl font-bold text-gold mt-1">{{ titulo }}</h1>
+    </div>
+
+    <div class="fade-in bg-darker border border-gold rounded-2xl p-6">
+        <form method="POST" enctype="multipart/form-data" class="space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-gold text-sm font-semibold mb-1">Nombre de la marca</label>
+                <input type="text" name="nombre" value="{{ marca.nombre|default:'' }}" required
+                       class="w-full bg-black border border-gold rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-gold">
+            </div>
+
+            <div>
+                <label class="block text-gold text-sm font-semibold mb-1">Descripción</label>
+                <textarea name="descripcion" rows="3"
+                          class="w-full bg-black border border-gold rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-gold resize-none">{{ marca.descripcion|default:'' }}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-gold text-sm font-semibold mb-1">Logo</label>
+                {% if marca.logo %}
+                <img src="{{ marca.logo.url }}" class="w-16 h-16 object-contain rounded border border-gold mb-2">
+                {% endif %}
+                <input type="file" name="logo" accept="image/*"
+                       class="w-full bg-black border border-gold rounded-lg px-4 py-2 text-white text-sm">
+            </div>
+
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" name="activo" {% if marca.activo or not marca %}checked{% endif %}
+                       class="w-4 h-4 accent-yellow-400">
+                <span class="text-gray-300 text-sm">Marca activa</span>
+            </label>
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit"
+                        class="flex-1 py-3 bg-gold text-black font-bold rounded-lg hover:bg-yellow-400 transition">
+                    <i class="fas fa-save mr-2"></i>{{ accion }} Marca
+                </button>
+                <a href="{% url 'perfumes:admin_marcas' %}"
+                   class="px-6 py-3 bg-gray-800 text-gray-300 font-bold rounded-lg hover:bg-gray-700 transition text-center">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -2,20 +2,110 @@
 {% block title %}Registro - Arkarz Perfums{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-black text-white">
-  <div class="bg-darker p-8 rounded-lg shadow-lg w-full max-w-md border border-gold">
-    <h2 class="text-2xl font-bold text-gold mb-6 text-center">Crear Cuenta</h2>
-    <form method="POST" class="space-y-4">
+<div class="min-h-screen flex items-center justify-center bg-black text-white py-12">
+  <div class="bg-darker p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gold">
+
+    <!-- Logo / Título -->
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-3">✨</div>
+      <h2 class="text-3xl font-bold text-gold">Crear Cuenta</h2>
+      <p class="text-gray-400 text-sm mt-1">Únete a la familia Arkarz Perfums</p>
+    </div>
+
+    <!-- Errores generales -->
+    {% if form.non_field_errors %}
+    <div class="bg-red-900 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
+      <i class="fas fa-exclamation-circle mr-2"></i>
+      {{ form.non_field_errors|join:", " }}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-5">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="w-full py-2 bg-gold text-black font-semibold rounded hover:bg-yellow-400 transition">
-        Registrarse
+
+      <!-- Nombre de usuario -->
+      <div>
+        <label class="block text-gold text-sm font-semibold mb-2">
+          <i class="fas fa-user mr-1"></i> Nombre de usuario
+        </label>
+        <input type="text" name="username" autofocus autocomplete="username"
+               value="{{ form.username.value|default:'' }}"
+               class="w-full bg-black border {% if form.username.errors %}border-red-500{% else %}border-gold{% endif %} rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition"
+               placeholder="Elige un nombre de usuario">
+        {% if form.username.errors %}
+        <p class="text-red-400 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.username.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <label class="block text-gold text-sm font-semibold mb-2">
+          <i class="fas fa-lock mr-1"></i> Contraseña
+        </label>
+        <div class="relative">
+          <input type="password" name="password1" id="password1" autocomplete="new-password"
+                 class="w-full bg-black border {% if form.password1.errors %}border-red-500{% else %}border-gold{% endif %} rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition pr-12"
+                 placeholder="Mínimo 8 caracteres">
+          <button type="button" onclick="togglePassword('password1', this)"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold transition">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        {% if form.password1.errors %}
+        <p class="text-red-400 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.password1.errors|join:", " }}</p>
+        {% endif %}
+        <!-- Requisitos -->
+        <ul class="text-gray-500 text-xs mt-2 space-y-1 pl-1">
+          <li><i class="fas fa-circle text-[6px] mr-1 align-middle"></i> Mínimo 8 caracteres</li>
+          <li><i class="fas fa-circle text-[6px] mr-1 align-middle"></i> No puede ser solo números</li>
+          <li><i class="fas fa-circle text-[6px] mr-1 align-middle"></i> No puede ser muy común</li>
+        </ul>
+      </div>
+
+      <!-- Confirmar Contraseña -->
+      <div>
+        <label class="block text-gold text-sm font-semibold mb-2">
+          <i class="fas fa-lock mr-1"></i> Confirmar contraseña
+        </label>
+        <div class="relative">
+          <input type="password" name="password2" id="password2" autocomplete="new-password"
+                 class="w-full bg-black border {% if form.password2.errors %}border-red-500{% else %}border-gold{% endif %} rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition pr-12"
+                 placeholder="Repite tu contraseña">
+          <button type="button" onclick="togglePassword('password2', this)"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold transition">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        {% if form.password2.errors %}
+        <p class="text-red-400 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.password2.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Botón -->
+      <button type="submit"
+              class="w-full py-3 bg-gold text-black font-bold rounded-lg hover:bg-yellow-400 transition text-lg mt-2 shadow-lg">
+        <i class="fas fa-user-plus mr-2"></i> Crear Cuenta
       </button>
     </form>
-    <p class="mt-4 text-center text-gray-400">
+
+    <p class="mt-6 text-center text-gray-400 text-sm">
       ¿Ya tienes cuenta?
-      <a href="{% url 'login' %}" class="text-gold hover:underline">Inicia sesión</a>
+      <a href="{% url 'login' %}" class="text-gold hover:underline font-semibold">Inicia sesión</a>
     </p>
   </div>
 </div>
+
+<script>
+function togglePassword(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
+</script>
 {% endblock %}

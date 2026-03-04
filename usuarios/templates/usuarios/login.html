@@ -2,20 +2,79 @@
 {% block title %}Iniciar Sesión - Arkarz Perfums{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-black text-white">
-  <div class="bg-darker p-8 rounded-lg shadow-lg w-full max-w-md border border-gold">
-    <h2 class="text-2xl font-bold text-gold mb-6 text-center">Iniciar Sesión</h2>
-    <form method="POST" class="space-y-4">
+<div class="min-h-screen flex items-center justify-center bg-black text-white py-12">
+  <div class="bg-darker p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gold">
+    
+    <!-- Logo / Título -->
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-3">🕌</div>
+      <h2 class="text-3xl font-bold text-gold">Bienvenido</h2>
+      <p class="text-gray-400 text-sm mt-1">Inicia sesión en tu cuenta Arkarz</p>
+    </div>
+
+    <!-- Mensajes de error -->
+    {% if form.errors %}
+    <div class="bg-red-900 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
+      <i class="fas fa-exclamation-circle mr-2"></i>
+      Usuario o contraseña incorrectos. Intenta de nuevo.
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-5">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="w-full py-2 bg-gold text-black font-semibold rounded hover:bg-yellow-400 transition">
-        Entrar
+
+      <!-- Usuario -->
+      <div>
+        <label class="block text-gold text-sm font-semibold mb-2">
+          <i class="fas fa-user mr-1"></i> Usuario
+        </label>
+        <input type="text" name="username" autofocus autocomplete="username"
+               value="{{ form.username.value|default:'' }}"
+               class="w-full bg-black border border-gold rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition"
+               placeholder="Tu nombre de usuario">
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <label class="block text-gold text-sm font-semibold mb-2">
+          <i class="fas fa-lock mr-1"></i> Contraseña
+        </label>
+        <div class="relative">
+          <input type="password" name="password" id="password" autocomplete="current-password"
+                 class="w-full bg-black border border-gold rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition pr-12"
+                 placeholder="Tu contraseña">
+          <button type="button" onclick="togglePassword('password', this)"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold transition">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Botón -->
+      <button type="submit"
+              class="w-full py-3 bg-gold text-black font-bold rounded-lg hover:bg-yellow-400 transition text-lg mt-2 shadow-lg">
+        <i class="fas fa-sign-in-alt mr-2"></i> Entrar
       </button>
     </form>
-    <p class="mt-4 text-center text-gray-400">
+
+    <p class="mt-6 text-center text-gray-400 text-sm">
       ¿No tienes cuenta?
-      <a href="{% url 'registro' %}" class="text-gold hover:underline">Regístrate</a>
+      <a href="{% url 'registro' %}" class="text-gold hover:underline font-semibold">Regístrate aquí</a>
     </p>
   </div>
 </div>
+
+<script>
+function togglePassword(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
+</script>
 {% endblock %}
