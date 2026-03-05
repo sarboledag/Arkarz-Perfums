@@ -6,119 +6,111 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-4xl font-bold text-center mb-8 text-gold">Nuestros Perfumes</h1>
-    
-    <!-- Formulario de Filtros -->
-    <div class="mb-8">
-        <form id="filtros-form" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Filtro por Marca -->
-            <div>
-                <label class="block text-sm font-medium text-gold mb-2">Marca</label>
-                <select name="marca" class="w-full px-4 py-2 border border-gold rounded-full bg-black text-gold focus:outline-none focus:ring-2 focus:ring-gold filtro-select">
-                    <option value="">Todas las marcas</option>
-                    {% for marca in marcas %}
-                        <option value="{{ marca.id }}" {% if marca.id|stringformat:"s" == marca_seleccionada %}selected{% endif %}>
-                            {{ marca.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Filtro por Sexo -->
-            <div>
-                <label class="block text-sm font-medium text-gold mb-2">Género</label>
-                <select name="sexo" class="w-full px-4 py-2 border border-gold rounded-full bg-black text-gold focus:outline-none focus:ring-2 focus:ring-gold filtro-select">
-                    <option value="">Todos</option>
-                    <option value="H" {% if sexo_seleccionado == 'H' %}selected{% endif %}>Hombre</option>
-                    <option value="M" {% if sexo_seleccionado == 'M' %}selected{% endif %}>Mujer</option>
-                    <option value="U" {% if sexo_seleccionado == 'U' %}selected{% endif %}>Unisex</option>
-                </select>
-            </div>
-            
-            <!-- Precio Mínimo -->
-            <div>
-                <label class="block text-sm font-medium text-gold mb-2">Precio Mín.</label>
-                <input type="number" name="precio_min" value="{{ precio_min }}" 
-                       class="w-full px-4 py-2 border border-gold rounded-full bg-black text-gold focus:outline-none focus:ring-2 focus:ring-gold filtro-input"
-                       placeholder="0" min="0" step="1000">
-            </div>
-            
-            <!-- Precio Máximo -->
-            <div>
-                <label class="block text-sm font-medium text-gold mb-2">Precio Máx.</label>
-                <input type="number" name="precio_max" value="{{ precio_max }}"
-                       class="w-full px-4 py-2 border border-gold rounded-full bg-black text-gold focus:outline-none focus:ring-2 focus:ring-gold filtro-input"
-                       placeholder="1000000" min="0" step="1000">
-            </div>
-        </form>
-        
-        <!-- Barra de búsqueda -->
-        <div class="mt-4">
-            <form id="busqueda-form" method="GET" class="flex">
-                <input type="text" name="q" value="{{ busqueda }}" 
-                       class="flex-1 px-4 py-2 border border-gold rounded-l-full bg-black text-gold focus:outline-none focus:ring-2 focus:ring-gold"
-                       placeholder="Buscar perfumes..." id="busqueda-input">
-                <button type="button" onclick="limpiarFiltros()" class="bg-gold text-black px-6 py-2 hover:bg-yellow-400 transition duration-300 font-bold">
-                    🔄 Limpiar
-                </button>
-                <button type="submit" class="bg-gold text-black px-6 py-2 rounded-r-full hover:bg-yellow-400 transition duration-300 font-bold">
-                    <i class="fas fa-search"></i>
-                </button>
+
+    <!-- Filtros -->
+    <div class="mb-6">
+        <!-- Botón toggle solo en móvil -->
+        <button id="toggle-filtros" class="md:hidden w-full bg-darker border border-gold text-gold py-2 px-4 rounded-lg mb-3 flex items-center justify-between">
+            <span><i class="fas fa-filter mr-2"></i>Filtros</span>
+            <i class="fas fa-chevron-down" id="filtros-icon"></i>
+        </button>
+
+        <div id="filtros-contenido" class="hidden md:block">
+            <form id="filtros-form" method="GET" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gold mb-1">Marca</label>
+                    <select name="marca" class="w-full px-3 py-2 border border-gold rounded-full bg-black text-gold text-sm focus:outline-none filtro-select">
+                        <option value="">Todas las marcas</option>
+                        {% for marca in marcas %}
+                            <option value="{{ marca.id }}" {% if marca.id|stringformat:"s" == marca_seleccionada %}selected{% endif %}>
+                                {{ marca.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gold mb-1">Género</label>
+                    <select name="sexo" class="w-full px-3 py-2 border border-gold rounded-full bg-black text-gold text-sm focus:outline-none filtro-select">
+                        <option value="">Todos</option>
+                        <option value="H" {% if sexo_seleccionado == 'H' %}selected{% endif %}>Hombre</option>
+                        <option value="M" {% if sexo_seleccionado == 'M' %}selected{% endif %}>Mujer</option>
+                        <option value="U" {% if sexo_seleccionado == 'U' %}selected{% endif %}>Unisex</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gold mb-1">Precio Mín.</label>
+                    <input type="number" name="precio_min" value="{{ precio_min }}"
+                           class="w-full px-3 py-2 border border-gold rounded-full bg-black text-gold text-sm focus:outline-none filtro-input"
+                           placeholder="0" min="0" step="1000">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gold mb-1">Precio Máx.</label>
+                    <input type="number" name="precio_max" value="{{ precio_max }}"
+                           class="w-full px-3 py-2 border border-gold rounded-full bg-black text-gold text-sm focus:outline-none filtro-input"
+                           placeholder="1000000" min="0" step="1000">
+                </div>
             </form>
+
+            <div class="mt-3">
+                <form id="busqueda-form" method="GET" class="flex">
+                    <input type="text" name="q" value="{{ busqueda }}"
+                           class="flex-1 px-4 py-2 border border-gold rounded-l-full bg-black text-gold text-sm focus:outline-none"
+                           placeholder="Buscar perfumes..." id="busqueda-input">
+                    <button type="button" onclick="limpiarFiltros()" class="bg-gold text-black px-4 py-2 hover:bg-yellow-400 transition font-bold text-sm">
+                        🔄 Limpiar
+                    </button>
+                    <button type="submit" class="bg-gold text-black px-4 py-2 rounded-r-full hover:bg-yellow-400 transition font-bold">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-    
+
     <!-- Ordenamiento y Resultados -->
-    <div class="flex justify-between items-center mb-6">
-        <p class="text-gold">
+    <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
+        <p class="text-gold text-sm">
             Mostrando {{ total_perfumes }} resultado{{ total_perfumes|pluralize }}
         </p>
-        
         <div class="flex items-center space-x-2">
-            <label class="text-sm text-gold">Ordenar por:</label>
-            <select id="ordenSelect" class="px-4 py-2 border border-gold rounded-full bg-black text-gold focus:outline-none focus:ring-2 focus:ring-gold">
+            <label class="text-xs text-gold">Ordenar por:</label>
+            <select id="ordenSelect" class="px-3 py-2 border border-gold rounded-full bg-black text-gold text-sm focus:outline-none">
                 <option value="nombre" {% if orden == 'nombre' %}selected{% endif %}>Nombre</option>
-                <option value="precio_asc" {% if orden == 'precio_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
-                <option value="precio_desc" {% if orden == 'precio_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                <option value="precio_asc" {% if orden == 'precio_asc' %}selected{% endif %}>Precio ↑</option>
+                <option value="precio_desc" {% if orden == 'precio_desc' %}selected{% endif %}>Precio ↓</option>
                 <option value="nuevo" {% if orden == 'nuevo' %}selected{% endif %}>Más Recientes</option>
             </select>
         </div>
     </div>
-    
+
     <!-- Grid de Perfumes -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {% for perfume in perfumes %}
             <div class="relative bg-darker rounded-lg shadow-md overflow-hidden hover:scale-105 hover:shadow-xl transition-all duration-300 border border-gold">
-                <!-- imagen/producto -->
                 {% if perfume.imagen %}
-                    <img src="{{ perfume.imagen.url }}" alt="{{ perfume.nombre }}" 
-                         class="w-full h-64 object-cover">
+                    <img src="{{ perfume.imagen.url }}" alt="{{ perfume.nombre }}" class="w-full h-64 object-cover">
                 {% else %}
                     <div class="w-full h-64 bg-black flex items-center justify-center">
                         <i class="fas fa-spray-can text-gold text-4xl"></i>
                     </div>
                 {% endif %}
-                
-                <!-- Botón de agregar a deseos -->
+
                 <button type="button"
                         data-perfume-id="{{ perfume.id }}"
                         data-wishlist-url="{% url 'perfumes:lista_deseos_anadir' perfume.id %}"
-                        class="btn-wishlist absolute top-3 right-12 text-yellow-400 bg-black/60 p-2 rounded-full shadow hover:text-yellow-300 transition"
+                        class="btn-wishlist absolute top-3 right-3 text-yellow-400 bg-black/60 p-2 rounded-full shadow hover:text-yellow-300 transition"
                         title="Agregar a deseos">
                     <i class="fas fa-heart text-lg"></i>
                 </button>
-                
+
                 <div class="p-4">
                     <h3 class="font-bold text-lg text-gold mb-2">{{ perfume.nombre }}</h3>
                     <p class="text-gold font-semibold text-sm mb-2">{{ perfume.marca.nombre }}</p>
-                    
                     {% if perfume.descripcion %}
                         <p class="text-gray-400 text-sm mb-3 line-clamp-2">{{ perfume.descripcion|truncatewords:15 }}</p>
                     {% endif %}
-                    
                     <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl font-bold text-gold">
-                            ${{ perfume.precio|floatformat:0 }}
-                        </span>
+                        <span class="text-2xl font-bold text-gold">${{ perfume.precio|floatformat:0 }}</span>
                         <span class="px-3 py-1 rounded-full text-xs font-medium
                                    {% if perfume.sexo == 'H' %}bg-blue-900 text-blue-200
                                    {% elif perfume.sexo == 'M' %}bg-pink-900 text-pink-200
@@ -128,9 +120,8 @@
                             {% else %}Unisex{% endif %}
                         </span>
                     </div>
-                    
-                    <a href="{% url 'perfumes:detalle_perfume' perfume.id %}" 
-                       class="block w-full text-center bg-gold text-black py-2 rounded-full hover:bg-yellow-400 transition duration-300 font-bold shadow-md hover:shadow-lg">
+                    <a href="{% url 'perfumes:detalle_perfume' perfume.id %}"
+                       class="block w-full text-center bg-gold text-black py-2 rounded-full hover:bg-yellow-400 transition duration-300 font-bold shadow-md">
                         <i class="fas fa-eye mr-2"></i> Ver Detalles
                     </a>
                 </div>
@@ -143,32 +134,30 @@
             </div>
         {% endfor %}
     </div>
-    
+
     <!-- Paginación -->
     {% if page_obj.has_other_pages %}
         <div class="flex justify-center mt-8">
             <nav class="flex items-center space-x-2">
                 {% if page_obj.has_previous %}
-                    <a href="?page=1{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                    <a href="?page=1{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
                        class="px-4 py-2 rounded-full bg-darker border border-gold text-gold hover:bg-gold hover:text-black transition">
                         <i class="fas fa-angle-double-left"></i>
                     </a>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
                        class="px-4 py-2 rounded-full bg-darker border border-gold text-gold hover:bg-gold hover:text-black transition">
                         <i class="fas fa-angle-left"></i>
                     </a>
                 {% endif %}
-                
                 <span class="px-5 py-2 bg-gold text-black rounded-full font-bold">
                     {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
                 </span>
-                
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
                        class="px-4 py-2 rounded-full bg-darker border border-gold text-gold hover:bg-gold hover:text-black transition">
                         <i class="fas fa-angle-right"></i>
                     </a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" 
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.marca %}&marca={{ request.GET.marca }}{% endif %}{% if request.GET.sexo %}&sexo={{ request.GET.sexo }}{% endif %}{% if request.GET.precio_min %}&precio_min={{ request.GET.precio_min }}{% endif %}{% if request.GET.precio_max %}&precio_max={{ request.GET.precio_max }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
                        class="px-4 py-2 rounded-full bg-darker border border-gold text-gold hover:bg-gold hover:text-black transition">
                         <i class="fas fa-angle-double-right"></i>
                     </a>
@@ -179,67 +168,52 @@
 </div>
 
 <script>
-// Auto-submit form when order changes
 document.getElementById('ordenSelect').addEventListener('change', function() {
     const url = new URL(window.location);
     url.searchParams.set('orden', this.value);
     window.location.href = url.toString();
 });
 
-// Filtrado automático
-let filtroTimeout;
-
-// Escuchar cambios en los selects (marca, sexo)
-document.querySelectorAll('.filtro-select').forEach(select => {
-    select.addEventListener('change', function() {
-        aplicarFiltros();
+// Toggle filtros móvil
+const toggleFiltros = document.getElementById('toggle-filtros');
+const filtrosContenido = document.getElementById('filtros-contenido');
+const filtrosIcon = document.getElementById('filtros-icon');
+if (toggleFiltros) {
+    toggleFiltros.addEventListener('click', () => {
+        filtrosContenido.classList.toggle('hidden');
+        filtrosIcon.classList.toggle('fa-chevron-down');
+        filtrosIcon.classList.toggle('fa-chevron-up');
     });
-});
+}
 
-// Escuchar cambios en los inputs de precio (con delay)
+let filtroTimeout;
+document.querySelectorAll('.filtro-select').forEach(select => {
+    select.addEventListener('change', () => aplicarFiltros());
+});
 document.querySelectorAll('.filtro-input').forEach(input => {
     input.addEventListener('input', function() {
         clearTimeout(filtroTimeout);
-        filtroTimeout = setTimeout(() => {
-            aplicarFiltros();
-        }, 800); // Espera 800ms después de que el usuario deje de escribir
+        filtroTimeout = setTimeout(() => aplicarFiltros(), 800);
     });
 });
 
-// Búsqueda automática
 let busquedaTimeout;
 document.getElementById('busqueda-input').addEventListener('input', function() {
     clearTimeout(busquedaTimeout);
-    busquedaTimeout = setTimeout(() => {
-        document.getElementById('busqueda-form').submit();
-    }, 1000); // Espera 1 segundo después de que el usuario deje de escribir
+    busquedaTimeout = setTimeout(() => document.getElementById('busqueda-form').submit(), 1000);
 });
 
 function aplicarFiltros() {
     const form = document.getElementById('filtros-form');
     const formData = new FormData(form);
     const params = new URLSearchParams();
-    
-    // Agregar todos los filtros
     for (let [key, value] of formData.entries()) {
-        if (value) {
-            params.append(key, value);
-        }
+        if (value) params.append(key, value);
     }
-    
-    // Mantener el orden actual si existe
     const ordenActual = new URLSearchParams(window.location.search).get('orden');
-    if (ordenActual) {
-        params.append('orden', ordenActual);
-    }
-    
-    // Mantener la búsqueda actual si existe
+    if (ordenActual) params.append('orden', ordenActual);
     const busquedaActual = document.getElementById('busqueda-input').value;
-    if (busquedaActual) {
-        params.append('q', busquedaActual);
-    }
-    
-    // Redirigir con los nuevos filtros
+    if (busquedaActual) params.append('q', busquedaActual);
     window.location.href = '?' + params.toString();
 }
 
