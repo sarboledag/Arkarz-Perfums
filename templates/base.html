@@ -50,21 +50,11 @@
             from { opacity: 0; }
             to   { opacity: 1; }
         }
-        .fade-in {
-            animation: fadeInUp 0.5s ease both;
-        }
-        main > * {
-            animation: fadeInUp 0.5s ease both;
-        }
-        body {
-            animation: fadeIn 0.3s ease;
-        }
-        nav a {
-            transition: color 0.2s ease, transform 0.2s ease;
-        }
-        nav a:hover {
-            transform: translateY(-1px);
-        }
+        .fade-in { animation: fadeInUp 0.5s ease both; }
+        main > * { animation: fadeInUp 0.5s ease both; }
+        body { animation: fadeIn 0.3s ease; }
+        nav a { transition: color 0.2s ease, transform 0.2s ease; }
+        nav a:hover { transform: translateY(-1px); }
     </style>
 </head>
 <body class="bg-black text-white">
@@ -78,7 +68,6 @@
                         <a href="{% url 'perfumes:home' %}" class="text-gray-300 hover:text-gold transition-colors">Inicio</a>
                         <a href="{% url 'perfumes:productos' %}" class="text-gray-300 hover:text-gold transition-colors">Productos</a>
                     </div>
-                    <!-- Corazón lista de deseos -->
                     {% if user.is_authenticated %}
                     <a id="wishlist-link" href="{% url 'perfumes:lista_deseos' %}"
                        class="text-gold hover:text-yellow-400 relative ml-4 md:ml-6" title="Mis deseos">
@@ -95,15 +84,13 @@
 
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <!-- ✅ Link al panel solo para admins -->
                         {% if user.is_staff %}
-                        <a href="{% url 'perfumes:admin_dashboard' %}" 
+                        <a href="{% url 'perfumes:admin_dashboard' %}"
                            class="text-gray-300 hover:text-gold transition flex items-center gap-1">
                             <i class="fas fa-crown text-gold"></i>
                             <span>Panel</span>
                         </a>
                         {% endif %}
-                        <!-- Link al perfil -->
                         <a href="{% url 'perfil' %}" class="text-gray-300 hover:text-gold transition flex items-center gap-1">
                             <i class="fas fa-user-circle"></i>
                             <span>{{ user.username }}</span>
@@ -131,7 +118,6 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Carrito sidebar -->
     <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-80 bg-darker border-l border-gold transform translate-x-full transition-transform z-50">
         <div class="p-4 border-b border-gold flex justify-between items-center">
             <h3 class="text-xl font-bold text-gold">🛒 Mi Carrito</h3>
@@ -251,6 +237,7 @@
             cartOverlay.classList.toggle('hidden');
         }
 
+        // ✅ WhatsApp: desktop abre nueva pestaña, móvil redirige directo
         checkoutBtn.addEventListener('click', async () => {
             const data = await fetchCart();
             let msg = "Hola, deseo hacer este pedido:\n\n";
@@ -259,7 +246,15 @@
             });
             msg += `\nTotal: $${data.total_monto.toLocaleString('es-CO')}\n`;
             msg += "\nPor favor confirmar disponibilidad.";
-            window.open(`https://wa.me/573218599032?text=${encodeURIComponent(msg)}`, "_blank");
+
+            const url = `https://wa.me/573218599032?text=${encodeURIComponent(msg)}`;
+
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                window.location.href = url;
+            } else {
+                window.open(url, "_blank");
+            }
+
             toggleCart();
         });
 
